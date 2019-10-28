@@ -1,5 +1,5 @@
--- Description: TODO your description here
--- Version: 0.1.0
+-- Description: Discover email and other profiles from npm accounts
+-- Version: 0.1.1
 -- License: GPL-3.0
 -- Source: accounts:npmjs.org
 
