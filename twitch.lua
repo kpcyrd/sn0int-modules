@@ -50,7 +50,7 @@ end
 
 service_map = {}
 service_map['www.instagram.com']    = {'^/([^/]+)', 'instagram.com'}
-service_map['twitter.com']          = {'^/([^/]+)', 'twitter.com'}
+service_map['twitter.com']          = {'^/@?([^/]+)', 'twitter.com'}
 service_map['www.patreon.com']      = {'^/([^/]+)', 'patreon.com'}
 service_map['www.tipeeestream.com'] = {'^/([^/]+)', 'tipeeestream.com'}
 
