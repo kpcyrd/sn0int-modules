@@ -1,5 +1,5 @@
--- Description: Query subdomains to discovery ip addresses and verify the record is visible
--- Version: 0.3.0
+-- Description: Query subdomains to discover ip addresses and verify the record is visible
+-- Version: 0.3.1
 -- Source: subdomains
 -- License: GPL-3.0
 
