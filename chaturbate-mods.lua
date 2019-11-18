@@ -1,13 +1,9 @@
--- Description: Monitor rooms for non-broadcasting users
+-- Description: Add mods in chaturbate rooms to scope
 -- Version: 0.1.0
 -- License: GPL-3.0
+-- Source: accounts:chaturbate.com
 
-function run()
-    local room = getopt('room')
-    if not room then
-        return 'You need to set a room to monitor'
-    end
-
+function run(arg)
     -- getting csrf token
     local session = http_mksession()
     local req = http_request(session, 'GET', 'https://chaturbate.com/', {})
@@ -18,31 +14,25 @@ function run()
 
     -- fetching room list
     headers = {}
-    headers['Referer'] = 'https://chaturbate.com/' .. room .. '/'
+    headers['Referer'] = 'https://chaturbate.com/' .. arg['username'] .. '/'
     headers['X-CSRFToken'] = csrf
     req = http_request(session, 'POST', 'https://chaturbate.com/api/getchatuserlist/', {
         headers=headers,
         form={
             sort_by='a',
             private='false',
-            roomname=room,
+            roomname=arg['username'],
         },
     })
     local r = http_fetch(req)
 
-    local m = regex_find_all(',([^,]+?)\\|', r['text'])
-    debug('found users: ' .. #m)
+    local m = regex_find_all(',([^,]+?)\\|m', r['text'])
     for i=1, #m do
-        -- if user is in scope, update last_seen
         local user = m[i][2]
-        local id = db_select('account', 'chaturbate.com/' .. user)
-        if id then
-            debug('found in ' .. room .. ': ' .. user)
-            db_add('account', {
-                service='chaturbate.com',
-                username=user,
-                last_seen=datetime(),
-            })
-        end
+        db_add('account', {
+            service='chaturbate.com',
+            username=user,
+            last_seen=datetime(),
+        })
     end
 end
