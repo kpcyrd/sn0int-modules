@@ -1,5 +1,5 @@
 -- Description: Collect information from chaturbate streams
--- Version: 0.1.0
+-- Version: 0.2.0
 -- License: GPL-3.0
 -- Source: accounts:chaturbate.com
 
@@ -35,25 +35,33 @@ end
 function run(arg)
     local session = http_mksession()
 
-    local url = 'https://chaturbate.com/' .. arg['username'] .. '/'
+    local url = 'https://chaturbate.com/api/chatvideocontext/' .. arg['username'] .. '/'
     local req = http_request(session, 'GET', url, {})
-    local r = http_send(req)
+    local r = http_fetch_json(req)
     if last_err() then return end
-    if r['status'] ~= 200 then
-        return 'http error: ' .. r['status']
-    end
 
     local last_seen = nil
-    if #html_select_list(r['text'], '.offline_tipping') > 0 then
+    if r['room_status'] == 'offline' then
         debug('is offline')
     else
         debug('is online')
         last_seen = datetime()
     end
 
+    debug('tfa_enabled=' .. r['tfa_enabled'])
+    debug('private_show_price=' .. r['private_show_price'])
+    debug('private_min_minutes=' .. r['private_min_minutes'])
+    debug('allow_show_recording=' .. r['allow_show_recording'])
+    debug('apps_running=' .. r['apps_running'])
+
+    url = 'https://chaturbate.com/' .. arg['username'] .. '/'
+    req = http_request(session, 'GET', url, {})
+    r = http_fetch(req)
+    if last_err() then return end
+
     db_update('account', arg, {
         last_seen=last_seen,
-        url='https://chaturbate.com/' .. arg['username'] .. '/',
+        url=url,
     })
 
     local links = html_select_list(r['text'], 'a[href^="/external_link/"]')
