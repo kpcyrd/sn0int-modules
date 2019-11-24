@@ -1,5 +1,5 @@
 -- Description: Monitor rooms for non-broadcasting users
--- Version: 0.1.0
+-- Version: 0.1.1
 -- License: GPL-3.0
 
 function run()
