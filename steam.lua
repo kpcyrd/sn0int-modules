@@ -1,5 +1,5 @@
 -- Description: Collection information from steam profiles
--- Version: 0.1.0
+-- Version: 0.2.0
 -- License: GPL-3.0
 -- Source: accounts:steamcommunity.com
 
@@ -11,7 +11,7 @@ function get_last_seen(html)
         debug('offline')
     else
         debug('online')
-        return datetime()
+        return sn0int_time()
     end
 end
 
@@ -54,6 +54,55 @@ function get_profiles(html)
 end
 ]]--
 
+function get_broadcast(user)
+    local url = 'https://steamcommunity.com/broadcast/watch/' .. user
+    local req = http_request(session, 'GET', url, {})
+    local r = http_send(req)
+    if last_err() then return end
+    if r['status'] ~= 200 then return end
+
+    local a = html_select_list(r['text'], '.ReportBroadcast')
+    if last_err() then return end
+
+    if #a == 0 then
+        return
+    end
+
+    local u = url_parse(a[1]['attrs']['href'])
+    local m = regex_find('\\d+$', u['query'])
+
+    if m then
+        url = 'https://steamcommunity.com/broadcast/getbroadcastmpd/'
+        req = http_request(session, 'GET', url, {
+            query={
+                steamid=m[1],
+            },
+        })
+        r = http_fetch_json(req)
+        local broadcastid = r['broadcastid']
+
+        url = 'https://steamcommunity.com/broadcast/getbroadcastinfo/'
+        req = http_request(session, 'GET', url, {
+            query={
+                steamid=m[1],
+                broadcastid=broadcastid,
+            },
+        })
+        r = http_fetch_json(req)
+
+        if r['is_replay'] ~= 0 then
+            return
+        end
+
+        debug({stream={
+            app_title=r['app_title'],
+            appid=r['appid'],
+            viewer_count=r['viewer_count'],
+        }})
+        return sn0int_time()
+    end
+end
+
 function run(arg)
     local url = 'https://steamcommunity.com/id/' .. arg['username']
 
@@ -75,6 +124,10 @@ function run(arg)
     update['url'] = url
     update['last_seen'] = get_last_seen(r['text'])
     if last_err() then return end
+
+    update['last_seen'] = get_broadcast(arg['username'])
+    if last_err() then return end
+
     update['displayname'] = get_displayname(r['text'])
     if last_err() then return end
     update['profile_pic'] = download_avatar(r['text'])
