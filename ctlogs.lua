@@ -1,11 +1,9 @@
 -- Description: Query certificate transparency logs to discover subdomains
--- Version: 0.5.0
+-- Version: 0.6.0
 -- Source: domains
 -- License: GPL-3.0
 
 function each_name(name)
-    local domain_id, psl_domain
-
     if seen[name] == 1 then
         return
     end
@@ -19,8 +17,8 @@ function each_name(name)
 
     -- the cert might be valid for subdomains that do not belong to the
     -- domain we started with
-    psl_domain = psl_domain_from_dns_name(name)
-    domain_id = domains[psl_domain]
+    local psl_domain = psl_domain_from_dns_name(name)
+    local domain_id = domains[psl_domain]
     if domain_id == nil then
         if any_domain then
             -- unknown domains should be added to database
@@ -47,55 +45,54 @@ function each_name(name)
 end
 
 function run(arg)
-    full = getopt('full') ~= nil
+    local full = getopt('full') ~= nil
     any_domain = getopt('any-domain') ~= nil
 
     domains = {}
     domains[arg['value']] = arg['id']
 
-    session = http_mksession()
-    req = http_request(session, 'GET', 'https://crt.sh/', {
+    local session = http_mksession()
+    local req = http_request(session, 'GET', 'https://crt.sh/', {
         query={
             q='%.' .. arg['value'],
             output='json'
         }
     })
 
-    resp = http_send(req)
-    if last_err() then return end
-    if resp['status'] ~= 200 then return 'http error: ' .. resp['status'] end
-
-    certs = json_decode(resp['text'])
+    local certs = http_fetch_json(req)
     if last_err() then return end
 
     seen = {}
 
     for i=1, #certs do
-        c = certs[i]
+        local c = certs[i]
         debug(c)
 
         if full then
             -- fetch certificate
-            id = c['min_cert_id']
             req = http_request(session, 'GET', 'https://crt.sh/', {
                 query={
-                    d=id .. '', -- TODO: find nicer way for tostring
+                    d=c['id'] .. '', -- TODO: find nicer way for tostring
                 }
             })
-            resp = http_send(req)
+            local r = http_fetch(req)
             if last_err() then return end
-            if resp['status'] ~= 200 then return 'http error: ' .. resp['status'] end
 
             -- iterate over all valid names
-            crt = x509_parse_pem(resp['text'])
+            local crt = x509_parse_pem(r['text'])
             if last_err() then return end
-            names = crt['valid_names']
 
+            local names = crt['valid_names']
             for j=1, #names do
                 each_name(names[j])
             end
         else
-            each_name(c['name_value'])
+            local m = regex_find_all('.+', c['name_value'])
+            if m then
+                for j=i, #m do
+                    each_name(m[j][1])
+                end
+            end
         end
     end
 end
