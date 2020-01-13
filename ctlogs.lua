@@ -1,5 +1,5 @@
 -- Description: Query certificate transparency logs to discover subdomains
--- Version: 0.6.0
+-- Version: 0.6.1
 -- Source: domains
 -- License: GPL-3.0
 
@@ -89,7 +89,7 @@ function run(arg)
         else
             local m = regex_find_all('.+', c['name_value'])
             if m then
-                for j=i, #m do
+                for j=1, #m do
                     each_name(m[j][1])
                 end
             end
