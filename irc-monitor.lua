@@ -50,18 +50,32 @@ function connect(sock)
     end
 end
 
-function rpl_mon(num, targets)
+function rpl_mon(network, num, targets)
     local m = regex_find_all('([^!,]+)[^,]*', targets)
     local now = sn0int_time()
 
     for i=1, #m do
         local user = m[i][2]
+
         if num == '730' then
-            info(now .. ' online: ' .. user)
+            push_event(network, now, user, 'online')
         elseif num == '731' then
-            info(now .. ' offline: ' .. user)
+            push_event(network, now, user, 'offline')
         end
     end
+end
+
+function push_event(network, now, user, state)
+    info(now .. ' ' .. state .. ': ' .. user)
+
+    local topic = 'kpcyrd/irc-monitor:' .. network .. '/' .. user
+    db_activity({
+        topic=topic,
+        time=now,
+        content={
+            state=state,
+        }
+    })
 end
 
 function run(arg)
@@ -95,7 +109,7 @@ function run(arg)
 
         local m = regex_find('^(\\S+) (\\S+) (\\S+) :(\\S+)', l)
         if m then
-            rpl_mon(m[3], m[5])
+            rpl_mon(network, m[3], m[5])
         end
     end
 end
