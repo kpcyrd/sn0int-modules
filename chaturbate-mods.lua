@@ -12,16 +12,18 @@ function run(arg)
     req = http_request(session, 'GET', 'https://chaturbate.com/', {})
     local csrf = req['cookies']['csrftoken']
 
+    local room = arg['username']
+
     -- fetching room list
     headers = {}
-    headers['Referer'] = 'https://chaturbate.com/' .. arg['username'] .. '/'
+    headers['Referer'] = 'https://chaturbate.com/' .. room .. '/'
     headers['X-CSRFToken'] = csrf
     req = http_request(session, 'POST', 'https://chaturbate.com/api/getchatuserlist/', {
         headers=headers,
         form={
             sort_by='a',
             private='false',
-            roomname=arg['username'],
+            roomname=room,
         },
     })
     local r = http_fetch(req)
@@ -29,10 +31,18 @@ function run(arg)
     local m = regex_find_all(',([^,]+?)\\|m', r['text'])
     for i=1, #m do
         local user = m[i][2]
+        local now = sn0int_time()
         db_add('account', {
             service='chaturbate.com',
             username=user,
-            last_seen=datetime(),
+            last_seen=now,
+        })
+        db_activity({
+            topic='kpcyrd/chaturbate-mods:' .. user,
+            time=now,
+            content={
+                moderates=room,
+            },
         })
     end
 end

@@ -37,11 +37,19 @@ function run()
         local user = m[i][2]
         local id = db_select('account', 'chaturbate.com/' .. user)
         if id then
+            local now = sn0int_time()
             debug('found in ' .. room .. ': ' .. user)
             db_add('account', {
                 service='chaturbate.com',
                 username=user,
-                last_seen=datetime(),
+                last_seen=now,
+            })
+            db_activity({
+                topic='kpcyrd/chaturbate-chat:' .. user,
+                time=now,
+                content={
+                    room=room,
+                },
             })
         end
     end
