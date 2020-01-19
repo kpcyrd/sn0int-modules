@@ -1,5 +1,5 @@
 -- Description: Monitor an irc network for users
--- Version: 0.1.0
+-- Version: 0.2.0
 -- License: GPL-3.0
 
 -- TODO: maybe read from accounts instead of options

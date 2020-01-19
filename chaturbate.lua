@@ -1,5 +1,5 @@
 -- Description: Collect information from chaturbate streams
--- Version: 0.2.0
+-- Version: 0.3.0
 -- License: GPL-3.0
 -- Source: accounts:chaturbate.com
 
