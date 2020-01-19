@@ -1,5 +1,5 @@
 -- Description: Extract exif data from images
--- Version: 0.1.0
+-- Version: 0.1.1
 -- License: GPL-3.0
 -- Source: images
 
@@ -8,5 +8,7 @@ function run(arg)
     if last_err() then return end
     debug(exif)
 
-    db_update('image', arg, exif)
+    if exif then
+        db_update('image', arg, exif)
+    end
 end
