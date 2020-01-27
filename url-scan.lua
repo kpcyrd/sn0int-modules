@@ -1,45 +1,53 @@
 -- Description: Scan subdomains for websites
--- Version: 0.3.0
+-- Version: 0.4.0
 -- Source: subdomains
 -- License: GPL-3.0
 
-function request(subdomain_id, url)
-    req = http_request(session, 'GET', url, {
+function add_port(ip_addr, port, r)
+    ip_addr_id = db_add('ipaddr', {
+        value=ip_addr,
+    })
+    if not ip_addr_id then return end
+
+    db_add('port', {
+        ip_addr_id=ip_addr_id,
+        ip_addr=ip_addr,
+        port=port,
+        protocol='tcp',
+        status='open',
+        banner=r['headers']['server'],
+    })
+end
+
+function request(subdomain_id, url, port)
+    local req = http_request(session, 'GET', url, {
         timeout=5000
     })
-    reply = http_send(req)
+    local r = http_send(req)
 
     if last_err() then
-        clear_err()
-        return
+        return clear_err()
     end
 
-    obj = {
+    if r['ipaddr'] then
+        add_port(r['ipaddr'], port, r)
+    end
+
+    db_add('url', {
         subdomain_id=subdomain_id,
         value=url,
-        status=reply['status'],
-        body=reply['text'],
-    }
-
-    redirect = reply['headers']['location']
-    if redirect then
-        obj['redirect'] = url_join(url, redirect)
-    end
-
-    db_add('url', obj)
-
-    -- debug(reply['status'])
-    -- debug(reply['headers']['location'])
-    -- debug(reply['text'])
+        status=r['status'],
+        body=r['text'],
+        redirect=r['headers']['location'],
+    })
 end
 
 function run(arg)
-    domain = arg['value']
+    local domain = arg['value']
 
     session = http_mksession()
-
-    request(arg['id'], 'http://' .. domain .. '/')
+    request(arg['id'], 'http://' .. domain .. '/', 80)
     if last_err() then return end
-    request(arg['id'], 'https://' .. domain .. '/')
+    request(arg['id'], 'https://' .. domain .. '/', 443)
     if last_err() then return end
 end
