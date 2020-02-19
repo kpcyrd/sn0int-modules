@@ -28,9 +28,69 @@ function detect_account(link)
     end
 end
 
+function read_activity(user)
+    local after = nil
+    while true do
+        local activity_url = 'https://letterboxd.com/ajax/activity-pagination/' .. user .. '/'
+        local req = http_request(session, 'GET', activity_url, {
+            query={
+                after=after,
+            }
+        })
+        local r = http_fetch(req)
+        if last_err() then return end
+
+        local activity = html_select_list(r['text'], 'section')
+
+        local last_seen = nil
+        for i=1, #activity do
+            local activity_id = activity[i]['attrs']['data-activity-id']
+            after = activity_id
+
+            local time = html_select(activity[i]['html'], 'time')
+            if last_err() then
+                clear_err()
+                return last_seen
+            end
+            time = strptime('%Y-%m-%dT%H:%M:%SZ', time['attrs']['datetime'])
+
+            -- update last_seen
+            if not last_seen or last_seen < time then
+                last_seen = time
+            end
+
+            local target = html_select(activity[i]['html'], 'a.target, .linked-film-poster')
+            if last_err() then return end
+
+            local href = target['attrs']['href']
+            if not href then
+                -- fallback in case it's a poster box
+                href = target['attrs']['data-target-link']
+            end
+
+            local movie = url_join('https://letterboxd.com/', href)
+
+            local reinserted = db_activity({
+                topic='kpcyrd/letterboxd:' .. user,
+                time=sn0int_time_from(time),
+                uniq='id:' .. activity_id,
+                content={
+                    movie=movie,
+                },
+            })
+
+            if reinserted then
+                return last_seen
+            end
+        end
+    end
+end
+
 function run(arg)
-    local session = http_mksession()
-    local url = 'https://letterboxd.com/' .. arg['username'] .. '/'
+    local user = arg['username']
+
+    session = http_mksession()
+    local url = 'https://letterboxd.com/' .. user .. '/'
     local update = {
         url=url,
     }
@@ -44,18 +104,11 @@ function run(arg)
         detect_account(links[i]['attrs']['href'])
     end
 
-    local activity_url = 'https://letterboxd.com/ajax/activity-pagination/' .. arg['username'] .. '/'
-    req = http_request(session, 'GET', activity_url, {})
-    r = http_fetch(req)
+    local last_seen = read_activity(user)
     if last_err() then return end
 
-    local activity = html_select_list(r['text'], 'time')
-    if #activity > 0 then
-        local last_activity = activity[1]['attrs']['datetime']
-        -- convert to timestamp
-        last_activity = strptime('%Y-%m-%dT%H:%M:%SZ', last_activity)
-        -- convert to sn0int datetime
-        update['last_seen'] = strftime('%Y-%m-%dT%H:%M:%S', last_activity)
+    if last_seen then
+        update['last_seen'] = sn0int_time_from(last_seen)
     end
 
     db_update('account', arg, update)
