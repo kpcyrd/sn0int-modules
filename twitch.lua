@@ -1,5 +1,5 @@
 -- Description: Collect information from twitch streams
--- Version: 0.1.1
+-- Version: 0.1.2
 -- License: GPL-3.0
 -- Source: accounts:twitch.tv
 
