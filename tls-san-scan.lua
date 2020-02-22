@@ -1,5 +1,5 @@
 -- Description: Import domains and subdomains from SAN certificates
--- Version: 0.1.0
+-- Version: 0.2.0
 -- License: GPL-3.0
 -- Source: subdomains
 
@@ -33,6 +33,7 @@ function run(arg)
 
     local tls = sock_upgrade_tls(sock, {
         sni_value=arg['value'],
+        disable_tls_verify=true,
     })
     if last_err() then return end
 
