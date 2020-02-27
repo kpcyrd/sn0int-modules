@@ -1,5 +1,5 @@
 -- Description: Fetch data from venmo profiles
--- Version: 0.1.0
+-- Version: 0.1.1
 -- License: GPL-3.0
 -- Source: accounts:venmo.com
 
@@ -48,7 +48,7 @@ function run(arg)
             url = 'https://graph.facebook.com/v2.10/' .. m[2] .. '/picture?type=large'
             db_add('account', {
                 service='facebook.com',
-                username=''..m[2],
+                username=strval(m[2]),
             })
         end
 

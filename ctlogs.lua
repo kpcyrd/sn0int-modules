@@ -1,5 +1,5 @@
 -- Description: Query certificate transparency logs to discover subdomains
--- Version: 0.6.1
+-- Version: 0.6.2
 -- Source: domains
 -- License: GPL-3.0
 
@@ -72,7 +72,7 @@ function run(arg)
             -- fetch certificate
             req = http_request(session, 'GET', 'https://crt.sh/', {
                 query={
-                    d=c['id'] .. '', -- TODO: find nicer way for tostring
+                    d=strval(c['id']),
                 }
             })
             local r = http_fetch(req)

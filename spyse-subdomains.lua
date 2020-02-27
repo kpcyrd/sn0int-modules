@@ -1,5 +1,5 @@
 -- Description: Request subdomains from spyse.com
--- Version: 0.1.0
+-- Version: 0.1.1
 -- License: GPL-3.0
 -- Source: domains
 -- Keyring-Access: spyse
@@ -19,7 +19,7 @@ function run(arg)
             query={
                 api_token=key['access_key'],
                 domain=arg['value'],
-                page=''..page,
+                page=strval(page),
             }
         })
         debug('sending request for page #' .. page)

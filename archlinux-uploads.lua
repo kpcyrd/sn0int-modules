@@ -1,5 +1,5 @@
 -- Description: Monitor archlinux packaging activity
--- Version: 0.1.0
+-- Version: 0.1.1
 -- License: GPL-3.0
 
 function each_pkg(maintainer, pkg)
@@ -51,7 +51,7 @@ function run()
         local req = http_request(session, 'GET', 'https://www.archlinux.org/packages/search/json/', {
             query={
                 packager=maintainer,
-                page=''..page, -- TOOD: strval
+                page=strval(page),
             }
         })
         local r = http_fetch_json(req)
