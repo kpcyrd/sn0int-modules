@@ -1,5 +1,5 @@
 -- Description: Find accounts by username with namechk.com
--- Version: 0.3.0
+-- Version: 0.4.0
 -- Source: accounts
 -- License: GPL-3.0
 
@@ -16,19 +16,24 @@ function get_services(html)
     return services
 end
 
+function service_name(url)
+    local parts = url_parse(url)
+    local domain = psl_domain_from_dns_name(parts['host'])
+    return domain
+end
+
 function run(arg)
     -- setup session
     local session = http_mksession()
     local req = http_request(session, 'GET', 'https://namechk.com/', {})
-    local resp = http_send(req)
+    local resp = http_fetch(req)
     if last_err() then return end
-    if resp['status'] ~= 200 then return 'http error: ' .. resp['status'] end
 
     local token = html_select(resp['text'], 'input[name="authenticity_token"]')
     local auth_token = token['attrs']['value']
 
-        local headers = {}
-        headers['X-CSRF-Token'] = authenticity_token
+    local headers = {}
+    headers['X-CSRF-Token'] = authenticity_token
 
     local services = get_services(resp['text'])
     debug({
@@ -44,13 +49,9 @@ function run(arg)
             q=arg['username'],
         }
     })
-    local resp = http_send(req)
+    local scan = http_fetch_json(req)
     if last_err() then return end
-    if resp['status'] ~= 200 then return 'http error: ' .. resp['status'] end
-    debug(resp)
-
-    local scan = json_decode(resp['text'])
-    if last_err() then return end
+    debug(scan)
     local scan_token = scan['valid']
 
     -- get results
@@ -74,10 +75,13 @@ function run(arg)
             debug(acc)
 
             if acc ~= nil and not acc['available'] and acc['status'] == 'unavailable' then
+                local callback_url = acc['callback_url']
+                local service = service_name(callback_url)
+
                 db_add('account', {
-                    service=services[i],
+                    service=service,
                     username=arg['username'],
-                    url=acc['callback_url'],
+                    url=callback_url,
                 })
             end
         end
