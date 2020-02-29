@@ -8,13 +8,20 @@ function read(sock)
     while true do
         local l = sock_recvline(sock)
         if last_err() then return end
+
+        if #l == 0 then
+            return set_err('ping timeout, disconnecting')
+        end
         debug(l)
 
         local m = regex_find('^PING (\\S+)', l)
         if m then
+            debug({
+                time=sn0int_time(),
+                m=m
+            })
             sock_sendline(sock, 'PONG ' .. m[2])
             if last_err() then return end
-            debug(m)
         else
             return l
         end
@@ -34,8 +41,7 @@ function random_name()
     end
 end
 
-function connect(sock)
-    local nick = random_name()
+function connect(sock, nick)
     sock_sendline(sock, 'NICK ' .. nick)
     sock_sendline(sock, 'USER ' .. nick .. ' 8 x : ' .. nick)
     if last_err() then return end
@@ -88,21 +94,21 @@ function run(arg)
     if not network then
         return 'Missing network= option (irc.example.com)'
     end
-    local port = getopt('port')
-    if not port then
-        port = '6697'
-    end
+    local port = intval(getopt('port') or 6697)
     local tls = not getopt('insecure')
     local target = getopt('target')
     if not target then
         return 'Missing target= option (user1,user2)'
     end
+    local nick = getopt('nick') or random_name()
+    local ping_timeout = intval(getopt('ping_timeout') or 240)
 
-    local sock = sock_connect(network, intval(port), {
+    local sock = sock_connect(network, port, {
         tls=tls,
+        read_timeout=ping_timeout,
     })
 
-    connect(sock)
+    connect(sock, nick)
     if last_err() then return end
 
     monitor(sock, target)
