@@ -26,7 +26,12 @@ function monitor(sock, user)
 end
 
 function random_name()
-    return http_mksession():sub(0, 10)
+    while true do
+        local nick = http_mksession():sub(0, 10)
+        if regex_find('^[a-zA-Z]', nick) then
+            return nick
+        end
+    end
 end
 
 function connect(sock)
@@ -52,20 +57,20 @@ end
 
 function rpl_mon(network, num, targets)
     local m = regex_find_all('([^!,]+)[^,]*', targets)
-    local now = sn0int_time()
 
     for i=1, #m do
         local user = m[i][2]
 
         if num == '730' then
-            push_event(network, now, user, 'online')
+            push_event(network, user, 'online')
         elseif num == '731' then
-            push_event(network, now, user, 'offline')
+            push_event(network, user, 'offline')
         end
     end
 end
 
-function push_event(network, now, user, state)
+function push_event(network, user, state)
+    local now = sn0int_time()
     info(now .. ' ' .. state .. ': ' .. user)
 
     local topic = 'kpcyrd/irc-monitor:' .. network .. '/' .. user
