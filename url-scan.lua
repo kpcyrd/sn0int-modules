@@ -1,5 +1,5 @@
 -- Description: Scan subdomains for websites
--- Version: 0.4.0
+-- Version: 0.5.0
 -- Source: subdomains
 -- License: GPL-3.0
 
@@ -21,7 +21,8 @@ end
 
 function request(subdomain_id, url, port)
     local req = http_request(session, 'GET', url, {
-        timeout=5000
+        timeout=5000,
+        binary=true,
     })
     local r = http_send(req)
 
@@ -37,7 +38,7 @@ function request(subdomain_id, url, port)
         subdomain_id=subdomain_id,
         value=url,
         status=r['status'],
-        body=r['text'],
+        body=r['binary'],
         redirect=r['headers']['location'],
     })
 end
