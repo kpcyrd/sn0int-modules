@@ -1,42 +1,27 @@
 -- Description: Query certificate transparency logs to discover subdomains
--- Version: 0.6.2
+-- Version: 0.7.0
 -- Source: domains
 -- License: GPL-3.0
 
-function each_name(name)
-    if seen[name] == 1 then
-        return
-    end
-    seen[name] = 1
+function each_name(target, name)
     debug(name)
 
     if name:find('*.') == 1 then
+        -- TODO: consider trimming `*.` and retry
         -- ignore wildcard domains
         return
     end
 
-    -- the cert might be valid for subdomains that do not belong to the
-    -- domain we started with
+    -- the cert might be valid for subdomains that do not belong to our target domain
     local psl_domain = psl_domain_from_dns_name(name)
-    local domain_id = domains[psl_domain]
-    if domain_id == nil then
-        if any_domain then
-            -- unknown domains should be added to database
-            domain_id = db_add('domain', {
-                value=psl_domain,
-            })
-        else
-            -- only use domains that are already in scope
-            domain_id = db_select('domain', psl_domain)
-        end
-
-        -- if we didn't get a valid id, skip
-        if domain_id == nil then
-            return
-        end
-
-        domains[psl_domain] = domain_id
+    if not any_domain and target ~= psl_domain and str_find(name, '.' .. target) ~= #name - #target then
+        return
     end
+
+    local domain_id = db_add('domain', {
+        value=psl_domain,
+    })
+    if domain_id == nil then return end
 
     db_add('subdomain', {
         domain_id=domain_id,
@@ -62,8 +47,6 @@ function run(arg)
     local certs = http_fetch_json(req)
     if last_err() then return end
 
-    seen = {}
-
     for i=1, #certs do
         local c = certs[i]
         debug(c)
@@ -84,13 +67,13 @@ function run(arg)
 
             local names = crt['valid_names']
             for j=1, #names do
-                each_name(names[j])
+                each_name(arg['value'], names[j])
             end
         else
             local m = regex_find_all('.+', c['name_value'])
             if m then
                 for j=1, #m do
-                    each_name(m[j][1])
+                    each_name(arg['value'], m[j][1])
                 end
             end
         end
