@@ -33,7 +33,6 @@ function add_url(value)
     db_add('url', {
         subdomain_id=subdomain_id,
         value=value,
-        body="", -- TODO: this should be nil
     })
 end
 

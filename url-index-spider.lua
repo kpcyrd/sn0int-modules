@@ -28,7 +28,6 @@ function add_url(url)
     db_add('url', {
         subdomain_id=subdomain_id,
         value=url,
-        body='', -- TODO: this is setting the body to an empty string in 0.17.1
     })
 end
 
