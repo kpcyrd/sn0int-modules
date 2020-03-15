@@ -1,13 +1,18 @@
 -- Description: Scan subdomains for websites
--- Version: 0.5.0
+-- Version: 0.5.1
 -- Source: subdomains
 -- License: GPL-3.0
 
-function add_port(ip_addr, port, r)
+function add_port(subdomain_id, ip_addr, port, r)
     ip_addr_id = db_add('ipaddr', {
         value=ip_addr,
     })
     if not ip_addr_id then return end
+
+    db_add('subdomain-ipaddr', {
+        subdomain_id=subdomain_id,
+        ip_addr_id=ip_addr_id,
+    })
 
     db_add('port', {
         ip_addr_id=ip_addr_id,
@@ -30,8 +35,12 @@ function request(subdomain_id, url, port)
         return clear_err()
     end
 
+    db_update('subdomain', arg, {
+        resolvable=resolvable
+    })
+
     if r['ipaddr'] then
-        add_port(r['ipaddr'], port, r)
+        add_port(subdomain_id, r['ipaddr'], port, r)
     end
 
     db_add('url', {
