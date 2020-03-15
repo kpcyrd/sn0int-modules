@@ -1,5 +1,5 @@
 -- Description: Read breached credentials by domain from pwndb hidden service (requires tor)
--- Version: 0.1.0
+-- Version: 0.1.1
 -- License: GPL-3.0
 -- Source: domains
 
@@ -20,9 +20,11 @@ function each_user(breach_id, domain, user)
 end
 
 function run(arg)
+    local proxy = getopt('proxy') or '127.0.0.1:9050'
+
     local session = http_mksession()
     local req = http_request(session, 'POST', 'http://pwndb2am4tzkvold.onion/', {
-        proxy='127.0.0.1:9050',
+        proxy=proxy,
         form={
             luser='%',
             domain=arg['value'],
@@ -32,7 +34,10 @@ function run(arg)
         },
     })
     local r = http_fetch(req)
-    if last_err() then return end
+    local err = last_err()
+    if err then
+        return set_err('Check tor is running! ' .. err)
+    end
 
     local pre = html_select(r['text'], 'pre')
     local lines = regex_find_all('.+', pre['text'])
