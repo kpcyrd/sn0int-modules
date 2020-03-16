@@ -1,5 +1,5 @@
 -- Description: Scan subdomains for websites
--- Version: 0.5.1
+-- Version: 0.5.2
 -- Source: subdomains
 -- License: GPL-3.0
 
@@ -24,7 +24,7 @@ function add_port(subdomain_id, ip_addr, port, r)
     })
 end
 
-function request(subdomain_id, url, port)
+function request(subdomain, url, port)
     local req = http_request(session, 'GET', url, {
         timeout=5000,
         binary=true,
@@ -35,16 +35,16 @@ function request(subdomain_id, url, port)
         return clear_err()
     end
 
-    db_update('subdomain', arg, {
+    db_update('subdomain', subdomain, {
         resolvable=resolvable
     })
 
     if r['ipaddr'] then
-        add_port(subdomain_id, r['ipaddr'], port, r)
+        add_port(subdomain['id'], r['ipaddr'], port, r)
     end
 
     db_add('url', {
-        subdomain_id=subdomain_id,
+        subdomain_id=subdomain['id'],
         value=url,
         status=r['status'],
         body=r['binary'],
@@ -56,8 +56,8 @@ function run(arg)
     local domain = arg['value']
 
     session = http_mksession()
-    request(arg['id'], 'http://' .. domain .. '/', 80)
+    request(arg, 'http://' .. domain .. '/', 80)
     if last_err() then return end
-    request(arg['id'], 'https://' .. domain .. '/', 443)
+    request(arg, 'https://' .. domain .. '/', 443)
     if last_err() then return end
 end
