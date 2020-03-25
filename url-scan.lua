@@ -1,5 +1,5 @@
 -- Description: Scan subdomains for websites
--- Version: 0.5.2
+-- Version: 0.5.3
 -- Source: subdomains
 -- License: GPL-3.0
 
@@ -26,7 +26,7 @@ end
 
 function request(subdomain, url, port)
     local req = http_request(session, 'GET', url, {
-        timeout=5000,
+        timeout=3000,
         binary=true,
     })
     local r = http_send(req)
@@ -36,11 +36,17 @@ function request(subdomain, url, port)
     end
 
     db_update('subdomain', subdomain, {
-        resolvable=resolvable
+        resolvable=true,
     })
 
     if r['ipaddr'] then
         add_port(subdomain['id'], r['ipaddr'], port, r)
+    end
+
+    -- an empty sequence is detected as a map and causing deserialization issues
+    -- force an empty string in that case
+    if #r['binary'] == 0 then
+        r['binary'] = ''
     end
 
     db_add('url', {
@@ -49,6 +55,7 @@ function request(subdomain, url, port)
         status=r['status'],
         body=r['binary'],
         redirect=r['headers']['location'],
+        online=true,
     })
 end
 
