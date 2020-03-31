@@ -1,5 +1,5 @@
 -- Description: Collect subdomains from virustotal data
--- Version: 0.1.0
+-- Version: 0.1.1
 -- License: GPL-3.0
 -- Source: domains
 
@@ -8,6 +8,8 @@ function run(arg)
     local url = 'https://www.virustotal.com/ui/domains/' .. arg['value'] .. '/subdomains?limit=40'
 
     while url do
+        ratelimit_throttle('virustotal', 5, 15000)
+
         local req = http_request(session, 'GET', url, {})
         local r = http_fetch_json(req)
         if last_err() then return end
