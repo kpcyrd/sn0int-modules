@@ -6,6 +6,9 @@
 function run(arg)
     local keyserver = 'https://keys.openpgp.org'
 
+    -- https://keys.openpgp.org/about/api#rate-limiting
+    ratelimit_throttle('openpgp', 1, 60000)
+
     local url = keyserver .. '/vks/v1/by-email/' .. arg['value']
     local session = http_mksession()
     local req = http_request(session, 'GET', url, {})
