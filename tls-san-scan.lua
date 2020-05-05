@@ -7,6 +7,11 @@ function each_name(name)
     domain = psl_domain_from_dns_name(name)
     if last_err() then return end
 
+    if domain:find('*.') == 1 then
+        -- ignore wildcards for public suffixes
+        return
+    end
+
     domain_id = db_add('domain', {
         value=domain,
     })
