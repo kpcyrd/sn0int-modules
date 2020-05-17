@@ -1,5 +1,5 @@
 -- Description: Import domains and subdomains from SAN certificates
--- Version: 0.2.0
+-- Version: 0.2.1
 -- License: GPL-3.0
 -- Source: subdomains
 
