@@ -44,7 +44,7 @@ function build_hostname_map(dhcp)
 
     local v6 = r['dhcp6_leases']
     for i=1, #v6 do
-        local l = r['dhcp_leases'][i]
+        local l = r['dhcp6_leases'][i]
         local mac = l['macaddr']
         if not hosts[mac] then
             hosts[mac] = {
