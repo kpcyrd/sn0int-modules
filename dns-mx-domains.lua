@@ -34,11 +34,13 @@ function run(arg)
             })
             if last_err() then return end
 
-            db_add('subdomain', {
-                domain_id=domain_id,
-                value=mx,
-            })
-            if last_err() then return end
+            if domain_id then
+                db_add('subdomain', {
+                    domain_id=domain_id,
+                    value=mx,
+                })
+                if last_err() then return end
+            end
         end
     end
 end
