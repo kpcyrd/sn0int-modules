@@ -1,5 +1,5 @@
 -- Description: Collect subdomains from virustotal data
--- Version: 0.1.1
+-- Version: 0.1.2
 -- License: GPL-3.0
 -- Source: domains
 
