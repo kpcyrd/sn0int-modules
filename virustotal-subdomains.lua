@@ -16,13 +16,17 @@ function run(arg)
 
         for i=1, #r['data'] do
             local d = r['data'][i]
-            local name = d['id']
 
-            db_add('subdomain', {
-                domain_id=arg['id'],
-                value=name,
-            })
-            if last_err() then return end
+            local m = regex_find('[^\\.].*[^\\.]', d['id'])
+            if m then
+                local name = m[1]
+
+                db_add('subdomain', {
+                    domain_id=arg['id'],
+                    value=name,
+                })
+                if last_err() then return end
+            end
         end
 
         url = r['links']['next']
