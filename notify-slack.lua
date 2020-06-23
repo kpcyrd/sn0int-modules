@@ -1,11 +1,13 @@
 -- Description: Send a notification with slack
--- Version: 0.1.0
+-- Version: 0.1.1
 -- License: GPL-3.0
 -- Source: notifications
 
 function run(arg)
     local url = getopt('url')
     if not url then return '-o url= missing' end
+
+    ratelimit_throttle('notify-slack-webhooks', 1, 1000)
 
     local text = arg['subject']
     if arg['body'] then
