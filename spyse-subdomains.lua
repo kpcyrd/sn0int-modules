@@ -1,5 +1,5 @@
 -- Description: Request subdomains from spyse.com
--- Version: 0.1.1
+-- Version: 0.2.0
 -- License: GPL-3.0
 -- Source: domains
 -- Keyring-Access: spyse
@@ -9,38 +9,38 @@ function run(arg)
     if not key then
         return 'Missing required spyse access key'
     end
-    local access_key = key['access_key']
 
     local session = http_mksession()
 
-    local page=1
+    local headers = {}
+    headers['Authorization'] = 'Bearer ' .. key['access_key']
+
+    local page = 0
+    local limit = 50
     while true do
-        local req = http_request(session, 'GET', 'https://api.spyse.com/v1/subdomains', {
+        local req = http_request(session, 'GET', 'https://api.spyse.com/v3/data/domain/subdomain', {
+            headers=headers,
             query={
-                api_token=key['access_key'],
+                limit=strval(limit),
+                offset=strval(page * limit),
                 domain=arg['value'],
-                page=strval(page),
             }
         })
         debug('sending request for page #' .. page)
-        local r = http_send(req)
-        if last_err() then return end
-        if r['status'] ~= 200 then return 'http error: ' .. r['status'] end
-
-        local data = json_decode(r['text'])
+        local r = http_fetch_json(req)
         if last_err() then return end
 
-        if #data['records'] == 0 then
+        local data = r['data']['items']
+
+        if #data == 0 then
             break
         end
 
-        for i=1, #data['records'] do
-            local record = data['records'][i]
-            local subdomain = record['domain']
-            -- info(record['ip']['ip'])
+        for i=1, #data do
+            local record = data[i]
             db_add('subdomain', {
                 domain_id=arg['id'],
-                value=subdomain,
+                value=record['name'],
             })
         end
 
