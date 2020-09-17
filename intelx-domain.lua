@@ -1,5 +1,5 @@
 -- Description: Discover subdomains, emails and urls from intelx.io
--- Version: 0.1.1
+-- Version: 0.2.0
 -- License: GPL-3.0
 -- Source: domains
 -- Keyring-Access: intelx
@@ -36,18 +36,14 @@ function add_url(value)
     })
 end
 
-function get_key()
-    local key = keyring('intelx')[1]
-    if key then
-        return key['access_key']
-    else
-        return '9df61df0-84f7-4dc7-b34c-8ccfb8646ace' -- public api key
-    end
-end
-
 function run(arg)
+    local key = keyring('intelx')[1]
+    if not key then
+        return 'Missing required intelx access key'
+    end
+
     local headers = {}
-    headers['x-key'] = get_key()
+    headers['x-key'] = key['access_key']
 
     local session = http_mksession()
     local req = http_request(session, 'POST', 'https://public.intelx.io/phonebook/search', {
