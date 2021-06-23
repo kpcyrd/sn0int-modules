@@ -1,20 +1,19 @@
 -- Description: Query pgp keyserver for email addresses
--- Version: 0.3.1
+-- Version: 0.4.0
 -- Source: domains
 -- License: GPL-3.0
-
--- TODO: rename to pgp-pks-domains
 
 function run(arg)
     local domain = arg['value']
 
-    --lookup_url = 'https://pgp.mit.edu/pks/lookup'
-    local lookup_url = 'https://sks-keyservers.net/pks/lookup'
+    local lookup_url = 'https://keyserver.ubuntu.com/pks/lookup'
 
     session = http_mksession()
     local req = http_request(session, 'GET', lookup_url, {
         query={
             search=domain,
+            fingerprint='on',
+            op='index',
         }
     })
 
