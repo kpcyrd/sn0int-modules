@@ -1,5 +1,5 @@
 -- Description: Retrieve additional information about a phone number
--- Version: 0.1.0
+-- Version: 0.1.1
 -- Source: phonenumbers
 -- Keyring-Access: twilio
 -- License: GPL-3.0
@@ -23,13 +23,13 @@ function run(arg)
     reply = http_send(req)
     if last_err() then return end
 
-    if reply['status'] ~= 200 then
-        return 'api returned error'
-    end
-
     v = json_decode(reply['text'])
     if last_err() then return end
     debug(v)
+
+    if reply['status'] ~= 200 then
+        return 'http error (' .. reply['status'] .. '): ' .. v['message'] .. ' ' .. v['detail']
+    end
 
     update = {}
     update['country'] = v['country_code']
