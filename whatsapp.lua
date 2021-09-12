@@ -21,6 +21,7 @@ function run(arg)
     debug('Main block h1 text: ' .. json_encode(name))
 
     -- check for placeholder `Chat auf WhatsApp mit +49 XYZ XXXXXXXX`
+    -- alternatively, test if og:title content is equal to <h1> text
     if str_find(name:gsub('%W', ''), phonenumber) == nil then
         db_update('phonenumber', arg, {
             caller_name=name,
