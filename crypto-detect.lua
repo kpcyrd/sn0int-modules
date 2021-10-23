@@ -1,11 +1,11 @@
 -- Description: Detect crypto currency from address
--- Version: 0.1.0
+-- Version: 0.2.0
 -- License: GPL-3.0
 -- Source: cryptoaddrs
 
 function run(arg)
     -- btc
-    m = regex_find('^[13][a-km-zA-HJ-NP-Z1-9]{25,34}$', arg['value'])
+    m = regex_find('^(bc1|[13])[a-zA-HJ-NP-Z0-9]{25,39}$', arg['value'])
     if m then
         db_update('cryptoaddr', arg, {
             currency='btc',
