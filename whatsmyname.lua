@@ -1,5 +1,5 @@
 -- Description: Scan for social media accounts using WebBreachers WhatsMyName json
--- Version: 0.1.0
+-- Version: 0.2.0
 -- License: GPL-3.0
 -- Source: accounts
 
@@ -20,11 +20,11 @@ function check_account(site, url)
     local r = http_send(req)
     if last_err() then return end
 
-    if r['status'] == intval(site['account_existence_code']) and r['text']:find(escape(site['account_existence_string'])) ~= nil then
+    if r['status'] == site['e_code'] and r['text']:find(escape(site['e_string'])) ~= nil then
         return true
     end
 
-    if r['status'] == intval(site['account_missing_code']) and r['text']:find(escape(site['account_missing_string'])) ~= nil then
+    if r['status'] == intval(site['m_code']) and r['text']:find(escape(site['m_string'])) ~= nil then
         return false
     end
 
@@ -35,18 +35,20 @@ function run(arg)
     local session = http_mksession()
 
     -- TODO: cache this file
-    debug('fetching web_accounts_list.json')
-    local req = http_request(session, 'GET', 'https://raw.githubusercontent.com/WebBreacher/WhatsMyName/master/web_accounts_list.json', {})
+    debug('fetching wmn-data.json')
+    local req = http_request(session, 'GET', 'https://raw.githubusercontent.com/WebBreacher/WhatsMyName/main/wmn-data.json', {})
     local r = http_fetch_json(req)
     if last_err() then return end
 
+    debug('loaded ' .. #r['sites'] .. ' rules')
+
     for i=1, #r['sites'] do
         local site = r['sites'][i]
-        local url = site['check_uri']:gsub('{account}', arg['username'])
+        local url = site['uri_check']:gsub('{account}', arg['username'])
 
         local pretty_url = url
-        if site['pretty_uri'] then
-            pretty_url = site['pretty_uri']:gsub('{account}', arg['username'])
+        if site['uri_pretty'] then
+            pretty_url = site['uri_pretty']:gsub('{account}', arg['username'])
         end
 
         debug(site)
